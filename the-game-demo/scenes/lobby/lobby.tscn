@@ -1,0 +1,158 @@
+[gd_scene format=3 uid="uid://dqlqjy8mwqkn7"]
+
+[ext_resource type="Script" path="res://scripts/lobby/lobby_ui.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_normal"]
+bg_color = Color(0.25, 0.3, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_hover"]
+bg_color = Color(0.35, 0.42, 0.55, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_success"]
+bg_color = Color(0.2, 0.6, 0.3, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="sb_panel"]
+bg_color = Color(0.08, 0.1, 0.15, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[node name="Lobby" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.15, 1)
+
+[node name="MainPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -180.0
+offset_right = 220.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("sb_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+text = "多人游戏大厅"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+
+[node name="StatusLabel" type="Label" parent="MainPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "正在创建大厅..."
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.7, 0.75, 0.8, 1)
+
+[node name="LobbyIdLabel" type="Label" parent="MainPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.5, 0.55, 0.6, 1)
+
+[node name="HSeparator" type="HSeparator" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="MemberLabel" type="Label" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+text = "成员列表"
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8, 0.85, 0.9, 1)
+
+[node name="MemberContainer" type="VBoxContainer" parent="MainPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 80)
+theme_override_constants/separation = 4
+
+[node name="HSeparator2" type="HSeparator" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="MainPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.7, 0.75, 0.8, 1)
+
+[node name="ButtonRow" type="HBoxContainer" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="StartGameBtn" type="Button" parent="MainPanel/VBoxContainer/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "开始游戏"
+theme_override_styles/normal = SubResource("sb_btn_success")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 16
+
+[node name="InviteBtn" type="Button" parent="MainPanel/VBoxContainer/ButtonRow"]
+layout_mode = 2
+text = "邀请好友"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 16
+
+[node name="LeaveBtn" type="Button" parent="MainPanel/VBoxContainer/ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "离开大厅"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 16
+
+[connection signal="pressed" from="MainPanel/VBoxContainer/ButtonRow/StartGameBtn" to="." method="_on_start_game_pressed"]
+[connection signal="pressed" from="MainPanel/VBoxContainer/ButtonRow/InviteBtn" to="." method="_on_invite_pressed"]
+[connection signal="pressed" from="MainPanel/VBoxContainer/ButtonRow/LeaveBtn" to="." method="_on_leave_pressed"]

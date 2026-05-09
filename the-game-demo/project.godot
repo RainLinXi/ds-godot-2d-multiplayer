@@ -20,6 +20,8 @@ run/main_scene="res://scenes/main_menu/main_menu.tscn"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 SettingsMgr="*res://scripts/autoload/settings_manager.gd"
 AudioMgr="*res://scripts/autoload/audio_manager.gd"
+SteamMgr="*res://scripts/autoload/steam_manager.gd"
+LobbyMgr="*res://scripts/autoload/lobby_manager.gd"
 
 [editor_plugins]
 

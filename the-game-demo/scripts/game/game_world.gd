@@ -76,7 +76,7 @@ func _try_respawn_player(player: PlayerController) -> void:
 func _get_highest_player_position() -> Vector2:
 	var highest_y := 99999.0
 	var highest_pos := Vector2(get_viewport_rect().size.x / 2.0, 0.0)
-	for p in get_tree().get_nodes_in_group("player"):
+	for p: PlayerController in get_tree().get_nodes_in_group("player"):
 		if p.alive and p.position.y < highest_y:
 			highest_y = p.position.y
 			highest_pos = p.position
@@ -85,7 +85,7 @@ func _get_highest_player_position() -> Vector2:
 
 ## 检查是否所有玩家都无剩余命数
 func _check_all_dead() -> void:
-	for p in get_tree().get_nodes_in_group("player"):
+	for p: PlayerController in get_tree().get_nodes_in_group("player"):
 		if p.current_lives > 0:
 			return  # 还有玩家活着
 

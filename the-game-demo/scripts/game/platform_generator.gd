@@ -76,8 +76,8 @@ func _generate_initial_floor() -> void:
 	for i in safe_layouts.size():
 		var layer := i + 1
 		var base_y := ground_y - (layer * layer_height)
-		var cx := world_width / 2.0 + safe_layouts[i].offset_x
-		var w := safe_layouts[i].width
+		var cx: float = world_width / 2.0 + safe_layouts[i].offset_x
+		var w: float = safe_layouts[i].width
 		_spawn_platform(cx, base_y, w)
 		all_platforms.append({"layer": layer, "x": cx - w / 2.0, "y": base_y, "width": w})
 
@@ -99,19 +99,19 @@ func _generate_layer(layer: int) -> void:
 	var candidates: Array = []
 	for _attempt in 10:
 		var width := rng.randf_range(platform_width_min, platform_width_max)
-		var cx := rng.randf_range(wall_margin + width / 2.0, world_width - wall_margin - width / 2.0)
+		var cx: float = rng.randf_range(wall_margin + width / 2.0, world_width - wall_margin - width / 2.0)
 
 		if _is_reachable_from_prev(cx, base_y, width, prev_platforms):
 			candidates.append({"x": cx - width / 2.0, "y": base_y, "width": width})
 
 	# 候选不足时强制在上一平台上方生成
 	if candidates.size() < 1:
-		var ref := prev_platforms[0]
-		var forced_cx := ref.x + ref.width / 2.0 + rng.randf_range(-60.0, 60.0)
+		var ref: Dictionary = prev_platforms[0]
+		var forced_cx: float = ref.x + ref.width / 2.0 + rng.randf_range(-60.0, 60.0)
 		forced_cx = clamp(forced_cx, wall_margin + platform_width_min / 2.0, world_width - wall_margin - platform_width_min / 2.0)
 		candidates.append({"x": forced_cx - platform_width_min / 2.0, "y": base_y, "width": platform_width_min})
 
-	var count := clampi(rng.randi_range(1, 3), 1, candidates.size())
+	var count: int = clampi(rng.randi_range(1, 3), 1, candidates.size())
 	candidates.shuffle()
 	for i in count:
 		var p = candidates[i]
@@ -124,8 +124,8 @@ func _generate_layer(layer: int) -> void:
 
 ## 从上一层是否可达
 func _is_reachable_from_prev(cx: float, cy: float, width: float, prev_platforms: Array) -> bool:
-	for prev in prev_platforms:
-		var prev_cx := prev.x + prev.width / 2.0
+	for prev: Dictionary in prev_platforms:
+		var prev_cx: float = prev.x + prev.width / 2.0
 		if abs(cx - prev_cx) <= jump_distance_max and abs(cy - prev.y) <= jump_height_max:
 			return true
 	return false
@@ -133,7 +133,7 @@ func _is_reachable_from_prev(cx: float, cy: float, width: float, prev_platforms:
 
 func _get_platforms_in_layer(layer: int) -> Array:
 	var result: Array = []
-	for p in all_platforms:
+	for p: Dictionary in all_platforms:
 		if p.layer == layer:
 			result.append(p)
 	return result

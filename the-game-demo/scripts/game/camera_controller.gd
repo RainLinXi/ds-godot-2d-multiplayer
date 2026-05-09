@@ -31,7 +31,7 @@ func _process(delta: float) -> void:
 
 	# 收集存活玩家
 	alive_players.clear()
-	for p in get_tree().get_nodes_in_group("player"):
+	for p: PlayerController in get_tree().get_nodes_in_group("player"):
 		if p.alive:
 			alive_players.append(p)
 
@@ -39,8 +39,8 @@ func _process(delta: float) -> void:
 		return  # 由 GameWorld 处理游戏结束
 
 	# 找最低的存活玩家
-	var lowest_y := alive_players[0].position.y
-	for p in alive_players:
+	var lowest_y: float = alive_players[0].position.y
+	for p: PlayerController in alive_players:
 		if p.position.y > lowest_y:
 			lowest_y = p.position.y
 
@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 
 	# 检测掉落: 玩家超出相机底部一定距离
 	camera_bottom = camera.position.y + viewport_height / 2.0
-	for p in alive_players:
+	for p: PlayerController in alive_players:
 		if p.position.y > camera_bottom + death_margin:
 			game_world.on_player_fell(p)
 

@@ -11,9 +11,7 @@ func _ready() -> void:
 
 
 func _on_single_player_pressed() -> void:
-	print("[MainMenu] 单人游戏")
-	# 阶段 2 实现 — 暂时打印日志
-	# GameMgr.start_single_player()
+	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 
 
 func _on_multiplayer_pressed() -> void:

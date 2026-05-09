@@ -1,3 +1,4 @@
+class_name SettingsMenuUI
 extends Panel
 ## 设置子面板 — 音量调节 + 玩家名输入
 ## 作为 MainMenu 的子节点，点击"游戏设置"时弹出

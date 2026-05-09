@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://bplayer000000001"]
+
+[ext_resource type="Script" path="res://scripts/game/player/player_controller.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="player_rect"]
+size = Vector2(40, $48)
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("player_rect")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -24)
+scale = Vector2(2, 2)
+
+[node name="InvincibilityTimer" type="Timer" parent="."]
+one_shot = true
+
+[connection signal="timeout" from="InvincibilityTimer" to="." method="_on_invincibility_timer_timeout"]

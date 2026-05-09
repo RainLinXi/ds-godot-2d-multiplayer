@@ -1,0 +1,135 @@
+[gd_scene load_steps=7 format=3 uid="uid://bgame00000000001"]
+
+[ext_resource type="Script" path="res://scripts/game/game_world.gd" id="1_world"]
+[ext_resource type="Script" path="res://scripts/game/camera_controller.gd" id="2_camera"]
+[ext_resource type="Script" path="res://scripts/game/platform_generator.gd" id="3_generator"]
+[ext_resource type="Script" path="res://scripts/ui/game_hud.gd" id="4_hud"]
+
+[sub_resource type="StyleBoxFlat" id="sb_panel"]
+bg_color = Color(0.05, 0.05, 0.1, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_normal"]
+bg_color = Color(0.25, 0.3, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="GameWorld" type="Node2D"]
+script = ExtResource("1_world")
+
+[node name="CameraController" type="Node2D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_camera")
+
+[node name="Camera2D" type="Camera2D" parent="CameraController"]
+current = true
+position = Vector2(576, 324)
+process_callback = 0
+
+[node name="Platforms" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Enemies" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Players" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="PlatformGenerator" type="Node2D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_generator")
+
+[node name="HUDLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="GameHUD" type="Control" parent="HUDLayer"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_hud")
+
+[node name="LivesLabel" type="Label" parent="HUDLayer/GameHUD"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 200.0
+offset_bottom = 50.0
+text = "命数: 3"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="ScoreLabel" type="Label" parent="HUDLayer/GameHUD"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 20.0
+offset_top = 48.0
+offset_right = 200.0
+offset_bottom = 78.0
+text = "得分: 0"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.9, 0.85, 0.3, 1)
+
+[node name="GameOverPanel" type="Panel" parent="HUDLayer/GameHUD"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -100.0
+offset_right = 160.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("sb_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUDLayer/GameHUD/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 15
+
+[node name="GameOverLabel" type="Label" parent="HUDLayer/GameHUD/GameOverPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "游戏结束!"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+
+[node name="RestartBtn" type="Button" parent="HUDLayer/GameHUD/GameOverPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "再来一局"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_font_sizes/font_size = 16
+
+[node name="MenuBtn" type="Button" parent="HUDLayer/GameHUD/GameOverPanel/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "返回主菜单"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_font_sizes/font_size = 16
+
+[connection signal="pressed" from="HUDLayer/GameHUD/GameOverPanel/VBoxContainer/RestartBtn" to="HUDLayer/GameHUD" method="_on_restart_pressed"]
+[connection signal="pressed" from="HUDLayer/GameHUD/GameOverPanel/VBoxContainer/MenuBtn" to="HUDLayer/GameHUD" method="_on_menu_pressed"]

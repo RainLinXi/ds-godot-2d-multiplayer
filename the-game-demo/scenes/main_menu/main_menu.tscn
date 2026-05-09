@@ -1,0 +1,221 @@
+[gd_scene format=3 uid="uid://hedgjl6pdgjw"]
+
+[ext_resource type="Script" path="res://scripts/main_menu/main_menu_ui.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/main_menu/settings_menu_ui.gd" id="2_script"]
+
+[sub_resource type="StyleBoxFlat" id="sb_bg"]
+bg_color = Color(0.1, 0.12, 0.18, 1)
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_normal"]
+bg_color = Color(0.25, 0.3, 0.4, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_hover"]
+bg_color = Color(0.35, 0.42, 0.55, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.15, 1)
+
+[node name="MenuContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -150.0
+offset_right = 150.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MenuContainer"]
+layout_mode = 2
+text = "The Game Demo"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+
+[node name="SpacerTop" type="Control" parent="MenuContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+
+[node name="SinglePlayerBtn" type="Button" parent="MenuContainer"]
+layout_mode = 2
+text = "单人游戏"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 18
+
+[node name="MultiplayerBtn" type="Button" parent="MenuContainer"]
+layout_mode = 2
+text = "多人游戏"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 18
+
+[node name="SettingsBtn" type="Button" parent="MenuContainer"]
+layout_mode = 2
+text = "游戏设置"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 18
+
+[node name="SpacerBottom" type="Control" parent="MenuContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 20)
+
+[node name="QuitBtn" type="Button" parent="MenuContainer"]
+layout_mode = 2
+text = "退出游戏"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+theme_override_font_sizes/font_size = 18
+
+[node name="SettingsPanel" type="Panel" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -175.0
+offset_top = -130.0
+offset_right = 175.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsMenuUI" type="Panel" parent="SettingsPanel"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_script")
+
+[node name="SettingsContainer" type="VBoxContainer" parent="SettingsPanel/SettingsMenuUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 15.0
+offset_top = 15.0
+offset_right = -15.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="SettingsTitle" type="Label" parent="SettingsPanel/SettingsMenuUI/SettingsContainer"]
+layout_mode = 2
+text = "游戏设置"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+
+[node name="MasterVolumeRow" type="HBoxContainer" parent="SettingsPanel/SettingsMenuUI/SettingsContainer"]
+layout_mode = 2
+
+[node name="MasterLabel" type="Label" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/MasterVolumeRow"]
+layout_mode = 2
+text = "主音量"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="MasterSlider" type="HSlider" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/MasterVolumeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+
+[node name="SfxVolumeRow" type="HBoxContainer" parent="SettingsPanel/SettingsMenuUI/SettingsContainer"]
+layout_mode = 2
+
+[node name="SfxLabel" type="Label" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/SfxVolumeRow"]
+layout_mode = 2
+text = "音效"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="SfxSlider" type="HSlider" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/SfxVolumeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+
+[node name="MusicVolumeRow" type="HBoxContainer" parent="SettingsPanel/SettingsMenuUI/SettingsContainer"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/MusicVolumeRow"]
+layout_mode = 2
+text = "音乐"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="MusicSlider" type="HSlider" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/MusicVolumeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 100.0
+value = 100.0
+
+[node name="PlayerNameRow" type="HBoxContainer" parent="SettingsPanel/SettingsMenuUI/SettingsContainer"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/PlayerNameRow"]
+layout_mode = 2
+text = "玩家名"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="NameInput" type="LineEdit" parent="SettingsPanel/SettingsMenuUI/SettingsContainer/PlayerNameRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Player"
+
+[node name="CloseBtn" type="Button" parent="SettingsPanel/SettingsMenuUI/SettingsContainer"]
+layout_mode = 2
+text = "关闭"
+theme_override_styles/normal = SubResource("sb_btn_normal")
+theme_override_styles/hover = SubResource("sb_btn_hover")
+
+[connection signal="pressed" from="MenuContainer/SinglePlayerBtn" to="." method="_on_single_player_pressed"]
+[connection signal="pressed" from="MenuContainer/MultiplayerBtn" to="." method="_on_multiplayer_pressed"]
+[connection signal="pressed" from="MenuContainer/SettingsBtn" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="MenuContainer/QuitBtn" to="." method="_on_quit_pressed"]
+[connection signal="value_changed" from="SettingsPanel/SettingsMenuUI/SettingsContainer/MasterVolumeRow/MasterSlider" to="SettingsPanel/SettingsMenuUI" method="_on_master_volume_changed"]
+[connection signal="value_changed" from="SettingsPanel/SettingsMenuUI/SettingsContainer/SfxVolumeRow/SfxSlider" to="SettingsPanel/SettingsMenuUI" method="_on_sfx_volume_changed"]
+[connection signal="value_changed" from="SettingsPanel/SettingsMenuUI/SettingsContainer/MusicVolumeRow/MusicSlider" to="SettingsPanel/SettingsMenuUI" method="_on_music_volume_changed"]
+[connection signal="text_changed" from="SettingsPanel/SettingsMenuUI/SettingsContainer/PlayerNameRow/NameInput" to="SettingsPanel/SettingsMenuUI" method="_on_name_text_changed"]
+[connection signal="pressed" from="SettingsPanel/SettingsMenuUI/SettingsContainer/CloseBtn" to="." method="_on_settings_close"]

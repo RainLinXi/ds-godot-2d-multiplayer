@@ -1,0 +1,13 @@
+# Godot 引擎生成
+.godot/
+
+# 导出目录
+android/
+build/
+
+# 用户数据
+*.translation
+*.import
+
+# 编辑器临时文件
+*.uid_cache

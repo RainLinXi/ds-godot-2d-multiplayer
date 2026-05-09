@@ -40,6 +40,10 @@ func _ready() -> void:
 	current_lives = max_lives
 	alive = true
 	add_to_group("player")
+	# 地板吸附：在边缘着陆时，距平台表面 15px 内自动吸附
+	# 防止碰撞体因部分重叠导致 move_and_slide 横向推开
+	floor_snap_length = 15.0
+	floor_max_angle = deg_to_rad(60.0)
 
 
 func _physics_process(delta: float) -> void:
@@ -57,8 +61,11 @@ func _physics_process(delta: float) -> void:
 	_apply_jump(want_jump)
 	_apply_gravity(delta)
 
-	# 单向平台: 上升时关闭碰撞（可穿过），下落/站立时开启碰撞
-	set_collision_mask_value(1, velocity.y >= 0)
+	# 单向平台处理
+	# was_on_floor 滞回: 前一帧在地面 → 保持碰撞，防止边缘跳下时滑落
+	# velocity.y >= 0: 下落/顶点→碰撞开启; velocity.y < 0: 上升→碰撞关闭(可穿过)
+	var was_on_floor := is_on_floor()
+	set_collision_mask_value(1, velocity.y >= 0 or was_on_floor)
 	move_and_slide()
 
 	# 更新朝向

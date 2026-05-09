@@ -40,10 +40,9 @@ func _ready() -> void:
 	current_lives = max_lives
 	alive = true
 	add_to_group("player")
-	# 地板吸附：在边缘着陆时，距平台表面 15px 内自动吸附
-	# 防止碰撞体因部分重叠导致 move_and_slide 横向推开
-	floor_snap_length = 15.0
-	floor_max_angle = deg_to_rad(60.0)
+	# 放宽地板判定角度到 80°，让平台边缘的浅重叠也能被正确识别为地板
+	# 默认 45° 太严格：边缘只有 2-3px 重叠时法线接近水平，会被误判为墙壁推开
+	floor_max_angle = deg_to_rad(80.0)
 
 
 func _physics_process(delta: float) -> void:
@@ -61,11 +60,9 @@ func _physics_process(delta: float) -> void:
 	_apply_jump(want_jump)
 	_apply_gravity(delta)
 
-	# 单向平台处理
-	# was_on_floor 滞回: 前一帧在地面 → 保持碰撞，防止边缘跳下时滑落
-	# velocity.y >= 0: 下落/顶点→碰撞开启; velocity.y < 0: 上升→碰撞关闭(可穿过)
-	var was_on_floor := is_on_floor()
-	set_collision_mask_value(1, velocity.y >= 0 or was_on_floor)
+	# 单向平台: 上升(v<0)关闭碰撞可穿过，下落/静止(v>=0)开启碰撞可站立
+	# 搭配 floor_max_angle=80° 解决边缘法线偏水平导致滑落的问题
+	set_collision_mask_value(1, velocity.y >= 0)
 	move_and_slide()
 
 	# 更新朝向

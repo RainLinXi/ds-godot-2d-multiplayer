@@ -5,7 +5,7 @@ extends CharacterBody2D
 
 # 基础参数
 @export var move_speed: float = 250.0
-@export var jump_velocity: float = -450.0
+@export var jump_velocity: float = -580.0
 @export var gravity: float = 980.0
 @export var max_lives: int = 3
 

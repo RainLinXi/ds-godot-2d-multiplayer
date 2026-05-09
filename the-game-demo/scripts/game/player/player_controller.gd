@@ -57,6 +57,8 @@ func _physics_process(delta: float) -> void:
 	_apply_jump(want_jump)
 	_apply_gravity(delta)
 
+	# 单向平台: 上升时关闭碰撞（可穿过），下落/站立时开启碰撞
+	set_collision_mask_value(1, velocity.y >= 0)
 	move_and_slide()
 
 	# 更新朝向

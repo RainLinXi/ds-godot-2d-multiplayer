@@ -31,6 +31,7 @@ var peer_id: int = 1
 
 # 预加载
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var visual_rect: ColorRect = $VisualRect
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var invincibility_timer: Timer = $InvincibilityTimer
 
@@ -107,9 +108,12 @@ func _apply_gravity(delta: float) -> void:
 func _update_visuals() -> void:
 	if is_invincible:
 		sprite.modulate = Color(1.0, 0.85, 0.3, 1.0)  # 金色闪烁
+		visual_rect.color = Color(1.0, 0.85, 0.3, 1.0)
 	else:
 		sprite.modulate = Color.WHITE
+		visual_rect.color = Color(0.2, 0.5, 0.9, 1.0)  # 蓝色
 	sprite.flip_h = not facing_right
+	visual_rect.scale.x = 1.0 if facing_right else -1.0
 
 
 ## 受到伤害 — 扣一条命并短暂无敌

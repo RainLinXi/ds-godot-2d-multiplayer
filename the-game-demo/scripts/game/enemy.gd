@@ -11,6 +11,7 @@ var move_direction: int = 1  # 1=右, -1=左
 var is_alive: bool = true
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var visual_rect: ColorRect = $VisualRect
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var detection_area: Area2D = $DetectionArea
 @onready var death_timer: Timer = $DeathTimer
@@ -34,6 +35,7 @@ func _process(delta: float) -> void:
 
 	# 更新视觉朝向
 	sprite.flip_h = move_direction < 0
+	visual_rect.scale.x = 1.0 if move_direction > 0 else -1.0
 
 
 func _physics_process(_delta: float) -> void:
@@ -63,6 +65,7 @@ func die() -> void:
 		return
 	is_alive = false
 	sprite.hide()
+	visual_rect.hide()
 	collision_shape.set_deferred("disabled", true)
 	# 短暂显示死亡特效后销毁
 	death_timer.start(0.3)

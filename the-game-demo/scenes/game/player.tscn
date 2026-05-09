@@ -1,23 +1,29 @@
-[gd_scene load_steps=3 format=3 uid="uid://bplayer000000001"]
+[gd_scene format=3 uid="uid://cytb14bx8rpqk"]
 
-[ext_resource type="Script" path="res://scripts/game/player/player_controller.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://s28mrgtrwqb" path="res://scripts/game/player/player_controller.gd" id="1_script"]
 
 [sub_resource type="RectangleShape2D" id="player_rect"]
-size = Vector2(40, $48)
+size = Vector2(40, 48)
 
-[node name="Player" type="CharacterBody2D"]
+[node name="Player" type="CharacterBody2D" unique_id=275567611]
 collision_layer = 2
-collision_mask = 1
 script = ExtResource("1_script")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=522732670]
 shape = SubResource("player_rect")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1679905982]
 position = Vector2(0, -24)
 scale = Vector2(2, 2)
 
-[node name="InvincibilityTimer" type="Timer" parent="."]
+[node name="VisualRect" type="ColorRect" parent="."]
+offset_left = -20.0
+offset_top = -48.0
+offset_right = 20.0
+offset_bottom = 0.0
+color = Color(0.2, 0.5, 0.9, 1)
+
+[node name="InvincibilityTimer" type="Timer" parent="." unique_id=536259125]
 one_shot = true
 
 [connection signal="timeout" from="InvincibilityTimer" to="." method="_on_invincibility_timer_timeout"]

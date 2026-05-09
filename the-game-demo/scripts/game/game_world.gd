@@ -40,8 +40,8 @@ func _ready() -> void:
 ## 创建本地玩家（单人模式）
 func _spawn_local_player() -> void:
 	var player := PLAYER_SCENE.instantiate() as PlayerController
-	# 在地面中央生成
-	player.position = Vector2(get_viewport_rect().size.x / 2.0, -50.0)
+	# 在地面平台上生成（ground_y = 580，玩家高度约 48）
+	player.position = Vector2(get_viewport_rect().size.x / 2.0, 550.0)
 	player.peer_id = 1
 	$Players.add_child(player)
 	local_player = player

@@ -40,6 +40,8 @@ func _ready() -> void:
 	var has_members := LobbyMgr.members.size() > 0
 	var is_multi := has_peer and has_members
 	print("[GameWorld] _ready: has_peer=%s has_members=%s is_multi=%s members=%d" % [has_peer, has_members, is_multi, LobbyMgr.members.size()])
+	if has_peer:
+		print("[GameWorld] 网络: unique_id=%d peers=%s is_server=%s" % [multiplayer.get_unique_id(), multiplayer.get_peers(), multiplayer.is_server()])
 
 	# 多人模式使用共享种子 (lobby_id)，单人模式随机
 	var seed_val: int = LobbyMgr.lobby_id if is_multi else 0
@@ -155,6 +157,75 @@ func trigger_game_over() -> void:
 
 func get_viewport_height() -> float:
 	return get_viewport_rect().size.y
+
+
+# ════════════════════════════════════════════
+# Steam P2P 数据包接收（替代 @rpc）
+# ════════════════════════════════════════════
+
+func _process(_delta: float) -> void:
+	if not multiplayer.multiplayer_peer:
+		return
+	_read_p2p_packets()
+
+
+## 轮询 Steam P2P 数据包并分发处理
+func _read_p2p_packets() -> void:
+	var packet_size: int = Steam.getAvailableP2PPacketSize(0)
+	while packet_size > 0:
+		var result: Dictionary = Steam.readP2PPacket(packet_size, 0)
+		if result and not result.is_empty():
+			var steam_id: int = result.steam_id_remote
+			var data: PackedByteArray = result.data
+			var state = bytes_to_var(data)
+			if typeof(state) == TYPE_DICTIONARY:
+				var msg_type: int = state.get("t", -1)
+				match msg_type:
+					0:  # 位置同步
+						_handle_position_packet(steam_id, state)
+					1:  # 敌人死亡
+						_handle_enemy_die_packet(state)
+					2:  # 玩家受伤
+						_handle_player_damage_packet(state)
+		packet_size = Steam.getAvailableP2PPacketSize(0)
+
+
+## 处理位置同步数据包：更新远程玩家的位置/速度/朝向/存活状态
+func _handle_position_packet(steam_id: int, state: Dictionary) -> void:
+	var player: PlayerController = _players.get(steam_id)
+	if not player or not is_instance_valid(player):
+		return  # 尚未生成或已释放
+
+	player.apply_remote_state(
+		Vector2(state["x"], state["y"]),
+		Vector2(state["vx"], state["vy"]),
+		state["f"],
+		state["a"]
+	)
+
+
+## 处理敌人死亡数据包：找到最近的敌人并消灭
+func _handle_enemy_die_packet(state: Dictionary) -> void:
+	var target_pos := Vector2(state["ex"], state["ey"])
+	var closest_enemy: Enemy = null
+	var closest_dist := 99999.0
+	for e: Enemy in get_tree().get_nodes_in_group("enemy"):
+		if not e.is_alive:
+			continue
+		var dist := e.position.distance_squared_to(target_pos)
+		if dist < closest_dist:
+			closest_dist = dist
+			closest_enemy = e
+	if closest_enemy and closest_dist < 2500.0:  # 50px 范围内
+		closest_enemy.die_from_p2p()
+
+
+## 处理玩家受伤数据包：查找对应玩家并扣命
+func _handle_player_damage_packet(state: Dictionary) -> void:
+	var target_id: int = state["pid"]
+	var player: PlayerController = _players.get(target_id)
+	if player and is_instance_valid(player):
+		player.take_damage()
 
 
 ## 获取本地玩家的 Steam ID（供其他系统使用）

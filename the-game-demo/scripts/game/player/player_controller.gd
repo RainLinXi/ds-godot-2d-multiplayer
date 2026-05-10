@@ -2,7 +2,7 @@ class_name PlayerController
 extends CharacterBody2D
 ## 玩家控制器 — 单人/多人通用
 ## 单人: 本地输入直驱
-## 多人: 每个客户端控制自己的角色 (peer_id == Steam ID)，位置通过 RPC 同步
+## 多人: 每个客户端控制自己的角色 (peer_id == Steam ID)，位置通过 Steam P2P 同步
 
 # 基础参数
 @export var move_speed: float = 250.0
@@ -31,11 +31,10 @@ var jump_buffer_timer: float = 0.0
 var peer_id: int = 1
 
 # 位置同步 (仅多人模式下自己的角色需要广播给其他客户端)
-const SYNC_INTERVAL: float = 0.05   # 每秒 20 次
+const SYNC_INTERVAL: float = 0.1   # 每秒 10 次 (reliable 模式下不宜太频繁)
 var _sync_timer: float = 0.0
 var _is_multiplayer: bool = false
-var _first_sync_logged: bool = false  # 仅首次收到同步时打印日志
-var _first_send_logged: bool = false  # 仅首次发送同步时打印日志
+var _p2p_send_count: int = 0  # P2P 发送计数（调试用）
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var visual_rect: ColorRect = $VisualRect
@@ -64,7 +63,9 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if not _is_my_player():
-		# 远程玩家: 碰撞检测用于正确站立在平台上
+		# 远程玩家: 需要重力 + 碰撞检测来自然站立在平台上
+		# P2P 位置同步会覆盖 position，但重力确保同步间歇时也能站住
+		_apply_gravity(delta)
 		set_collision_mask_value(1, velocity.y >= 0)
 		move_and_slide()
 		return
@@ -88,14 +89,11 @@ func _physics_process(delta: float) -> void:
 		facing_right = input_x > 0
 		_update_visuals()
 
-	# 广播位置给其他客户端
+	# 通过 Steam P2P 广播位置给其他客户端
 	_sync_timer += delta
 	if _sync_timer >= SYNC_INTERVAL:
 		_sync_timer = 0.0
-		if not _first_send_logged:
-			_first_send_logged = true
-			print("[Player] _sync_state 首次发送: peer_id=%d pos=%s" % [peer_id, position])
-		_sync_state.rpc(position, velocity, facing_right, alive)
+		_send_position_p2p()
 
 
 func _update_buffers(delta: float) -> void:
@@ -147,16 +145,35 @@ func _update_visuals() -> void:
 
 
 # ════════════════════════════════════════════
-# 多人同步 RPC
+# Steam P2P 位置同步（替代 @rpc，因为 SteamMultiplayerPeer 不支持 Godot RPC）
 # ════════════════════════════════════════════
 
-## 广播自己的状态给所有其他客户端 (unreliable = 低延迟, 不保证送达)
-@rpc("any_peer", "unreliable_ordered", "call_remote")
-func _sync_state(pos: Vector2, vel: Vector2, facing: bool, is_alive: bool) -> void:
-	if not _first_sync_logged:
-		_first_sync_logged = true
-		print("[Player] _sync_state 首次收到: peer_id=%d pos=%s" % [peer_id, pos])
+## 通过 Steam P2P 广播自己的状态给其他大厅成员
+func _send_position_p2p() -> void:
+	var state := {
+		"t": 0,  # message type: 0 = position sync
+		"x": position.x,
+		"y": position.y,
+		"vx": velocity.x,
+		"vy": velocity.y,
+		"f": facing_right,
+		"a": alive
+	}
+	var data: PackedByteArray = var_to_bytes(state)
+	var my_id := _get_my_steam_id()
+	for m in LobbyMgr.members:
+		var sid: int = m.steam_id
+		if sid != my_id:
+			Steam.sendP2PPacket(sid, data, Steam.P2P_SEND_UNRELIABLE, 0)
 
+	_p2p_send_count += 1
+	if _p2p_send_count == 1:
+		print("[Player] P2P 首次发送: peer_id=%d pos=%s" % [peer_id, position])
+	elif _p2p_send_count % 100 == 0:
+		print("[Player] P2P 已发送 %d 次" % _p2p_send_count)
+
+## 应用远程玩家状态（由 GameWorld._process 调用）
+func apply_remote_state(pos: Vector2, vel: Vector2, facing: bool, is_alive: bool) -> void:
 	if _is_my_player():
 		return  # 不覆盖自己的状态
 
@@ -176,12 +193,6 @@ func _sync_state(pos: Vector2, vel: Vector2, facing: bool, is_alive: bool) -> vo
 # ════════════════════════════════════════════
 # 伤害 / 死亡 / 复活
 # ════════════════════════════════════════════
-
-## 主机调用此 RPC 通知客户端受伤
-@rpc("authority", "reliable", "call_remote")
-func _rpc_take_damage() -> void:
-	take_damage()
-
 
 ## 受到伤害 — 扣一条命并短暂无敌
 func take_damage() -> void:

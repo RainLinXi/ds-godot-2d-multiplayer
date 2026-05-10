@@ -52,18 +52,46 @@ func _physics_process(_delta: float) -> void:
 
 func _on_hit_player(player: PlayerController) -> void:
 	if player.is_invincible:
-		# 玩家无敌 → 敌人被消灭，通知所有客户端
-		_rpc_die.rpc()
+		# 玩家无敌 → 敌人被消灭，通过 P2P 通知所有客户端
+		_send_p2p_enemy_die()
 		die()
 	else:
-		# 正常碰撞 → 通知客户端扣命，本地也扣
-		player._rpc_take_damage.rpc()
+		# 正常碰撞 → 通过 P2P 通知客户端扣命，本地也扣
+		_send_p2p_player_damage(player.peer_id)
 		player.take_damage()
 
 
-## 主机通知所有客户端敌人死亡
-@rpc("authority", "reliable", "call_remote")
-func _rpc_die() -> void:
+## 通过 Steam P2P 通知所有客户端敌人死亡（附带当前位置用于识别）
+func _send_p2p_enemy_die() -> void:
+	var msg := {
+		"t": 1,  # message type: 1 = enemy died
+		"ex": position.x,
+		"ey": position.y
+	}
+	var data: PackedByteArray = var_to_bytes(msg)
+	var my_id := Steam.getSteamID()
+	for m in LobbyMgr.members:
+		var sid: int = m.steam_id
+		if sid != my_id:
+			Steam.sendP2PPacket(sid, data, Steam.P2P_SEND_RELIABLE, 0)
+
+
+## 通过 Steam P2P 通知所有客户端某玩家受伤
+func _send_p2p_player_damage(target_steam_id: int) -> void:
+	var msg := {
+		"t": 2,  # message type: 2 = player took damage
+		"pid": target_steam_id
+	}
+	var data: PackedByteArray = var_to_bytes(msg)
+	var my_id := Steam.getSteamID()
+	for m in LobbyMgr.members:
+		var sid: int = m.steam_id
+		if sid != my_id:
+			Steam.sendP2PPacket(sid, data, Steam.P2P_SEND_RELIABLE, 0)
+
+
+## 由 P2P 数据包触发的死亡（不需要重复发送 P2P）
+func die_from_p2p() -> void:
 	die()
 
 

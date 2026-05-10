@@ -70,14 +70,18 @@ func leave_lobby() -> void:
 	lobby_left.emit()
 
 
-## 开始游戏（阶段 3: 仅切换场景；阶段 4: 先激活 multiplayer_peer 再切换）
+## 开始游戏 — 通过 Steam 大厅数据通知客户端同步切换
 func start_game() -> void:
 	if not is_host:
 		error_occurred.emit("只有房主可以开始游戏")
 		return
 
-	print("[LobbyMgr] 房主开始游戏 — 切换到 game_world")
-	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
+	print("[LobbyMgr] 房主开始游戏 — 通过 lobby_data 通知客户端")
+	# 设置大厅数据 "state"="in_game"，客户端监听此变化自动切换
+	Steam.setLobbyData(lobby_id, "state", "in_game")
+
+	# 激活 P2P 网络并切换场景
+	_activate_and_switch()
 
 
 ## 获取当前大厅成员数量
@@ -104,6 +108,10 @@ func _connect_steam_signals() -> void:
 	Steam.lobby_created.connect(_on_lobby_created)
 	Steam.lobby_joined.connect(_on_lobby_joined)
 	Steam.lobby_chat_update.connect(_on_lobby_chat_update)
+	# 好友通过 Steam 叠加层接受邀请 → 自动加入大厅
+	Steam.join_requested.connect(_on_join_requested)
+	# 大厅数据变更（用于信号场景切换等）
+	Steam.lobby_data_update.connect(_on_lobby_data_update)
 
 
 # ── Steam 回调处理 ────
@@ -169,6 +177,32 @@ func _on_lobby_chat_update(_chat_lobby_id: int, _changed_user_id: int, _making_c
 	if lobby_id == 0:
 		return
 	_refresh_members()
+
+
+## 好友通过 Steam 叠加层接受邀请 → 自动加入大厅
+func _on_join_requested(p_lobby_id: int, _friend_id: int) -> void:
+	print("[LobbyMgr] 收到好友邀请 — 加入大厅 %d (好友: %d)" % [p_lobby_id, _friend_id])
+	join_lobby(p_lobby_id)
+	# 切换到大厅场景（join_lobby 异步完成，UI 通过信号更新）
+	get_tree().change_scene_to_file("res://scenes/lobby/lobby.tscn")
+
+
+## 大厅数据变更 — 用于检测房主开始游戏等信号
+func _on_lobby_data_update(success: int, p_lobby_id: int, _member_id: int) -> void:
+	if not success or p_lobby_id != lobby_id:
+		return
+	# 手动查询 "state" 键判断房主是否开始了游戏
+	var state: String = Steam.getLobbyData(p_lobby_id, "state")
+	print("[LobbyMgr] 大厅数据变更: lobby=%d state=%s" % [p_lobby_id, state])
+	if state == "in_game" and not is_host:
+		print("[LobbyMgr] 房主已开始游戏 — 切换到 game_world")
+		_activate_and_switch()
+
+
+## 激活 P2P 网络并切换到游戏场景（主机和客户端共用）
+func _activate_and_switch() -> void:
+	get_tree().set("multiplayer_peer", multiplayer_peer)
+	get_tree().change_scene_to_file("res://scenes/game/game_world.tscn")
 
 
 # ── 成员管理 ────

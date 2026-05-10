@@ -1,7 +1,8 @@
 class_name PlayerController
 extends CharacterBody2D
-## 玩家控制器 — 单人/多人通用（服务器权威模式）
-## 职责：移动/跳跃/重力/命数/加成状态
+## 玩家控制器 — 单人/多人通用
+## 单人: 本地输入直驱
+## 多人: 每个客户端控制自己的角色 (peer_id == Steam ID)，位置通过 RPC 同步
 
 # 基础参数
 @export var move_speed: float = 250.0
@@ -21,15 +22,19 @@ var bonus_speed_mult: float = 1.5
 var bonus_jump_mult: float = 1.3
 
 # 缓冲系统
-var coyote_time: float = 0.08    # 离开平台后可跳跃的缓冲时间
-var jump_buffer_time: float = 0.1  # 按跳跃键后的缓冲时间
+var coyote_time: float = 0.08
+var jump_buffer_time: float = 0.1
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
 
-# 网络 ID（多人时由 GameWorld 设置）
+# 网络 ID（对应用户的 Steam ID，单人模式默认 1）
 var peer_id: int = 1
 
-# 预加载
+# 位置同步 (仅多人模式下自己的角色需要广播给其他客户端)
+const SYNC_INTERVAL: float = 0.05   # 每秒 20 次
+var _sync_timer: float = 0.0
+var _is_multiplayer: bool = false
+
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var visual_rect: ColorRect = $VisualRect
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
@@ -40,19 +45,31 @@ func _ready() -> void:
 	current_lives = max_lives
 	alive = true
 	add_to_group("player")
-	# 放宽地板判定角度到 80°，让平台边缘的浅重叠也能被正确识别为地板
-	# 默认 45° 太严格：边缘只有 2-3px 重叠时法线接近水平，会被误判为墙壁推开
 	floor_max_angle = deg_to_rad(80.0)
+
+	# 检测多人模式
+	_is_multiplayer = multiplayer.multiplayer_peer != null
+	if _is_multiplayer:
+		print("[Player] peer_id=%d, my_steam_id=%d, is_mine=%s" % [peer_id, _get_my_steam_id(), _is_my_player()])
 
 
 func _physics_process(delta: float) -> void:
 	if not alive:
+		# 已死亡: 远程玩家仍需碰撞检测（保持同步位置可站立于平台）
+		if _is_multiplayer and not _is_my_player():
+			set_collision_mask_value(1, velocity.y >= 0)
+			move_and_slide()
 		return
 
-	# 更新缓冲计时器
+	if not _is_my_player():
+		# 远程玩家: 碰撞检测用于正确站立在平台上
+		set_collision_mask_value(1, velocity.y >= 0)
+		move_and_slide()
+		return
+
+	# ── 以下仅本地玩家执行 ──
 	_update_buffers(delta)
 
-	# 处理输入和物理
 	var input_x := Input.get_axis("ui_left", "ui_right")
 	var want_jump := Input.is_action_just_pressed("ui_accept")
 
@@ -60,25 +77,28 @@ func _physics_process(delta: float) -> void:
 	_apply_jump(want_jump)
 	_apply_gravity(delta)
 
-	# 单向平台: 上升(v<0)关闭碰撞可穿过，下落/静止(v>=0)开启碰撞可站立
-	# 搭配 floor_max_angle=80° 解决边缘法线偏水平导致滑落的问题
+	# 单向平台
 	set_collision_mask_value(1, velocity.y >= 0)
 	move_and_slide()
 
 	# 更新朝向
 	if input_x != 0:
 		facing_right = input_x > 0
-	_update_visuals()
+		_update_visuals()
+
+	# 广播位置给其他客户端
+	_sync_timer += delta
+	if _sync_timer >= SYNC_INTERVAL:
+		_sync_timer = 0.0
+		_sync_state.rpc(position, velocity, facing_right, alive)
 
 
 func _update_buffers(delta: float) -> void:
-	# 土狼时间: 在地面上时重置，否则倒计时
 	if is_on_floor():
 		coyote_timer = coyote_time
 	else:
 		coyote_timer = max(0.0, coyote_timer - delta)
 
-	# 跳跃缓冲: 按跳跃键时充值，否则倒计时
 	if Input.is_action_just_pressed("ui_accept"):
 		jump_buffer_timer = jump_buffer_time
 	else:
@@ -101,7 +121,6 @@ func _apply_jump(want_jump: bool) -> void:
 		if has_teammate_bonus:
 			jump_vel *= bonus_jump_mult
 		velocity.y = jump_vel
-		# 消耗缓冲
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
 
@@ -113,13 +132,46 @@ func _apply_gravity(delta: float) -> void:
 
 func _update_visuals() -> void:
 	if is_invincible:
-		sprite.modulate = Color(1.0, 0.85, 0.3, 1.0)  # 金色闪烁
+		sprite.modulate = Color(1.0, 0.85, 0.3, 1.0)
 		visual_rect.color = Color(1.0, 0.85, 0.3, 1.0)
 	else:
 		sprite.modulate = Color.WHITE
-		visual_rect.color = Color(0.2, 0.5, 0.9, 1.0)  # 蓝色
+		visual_rect.color = Color(0.2, 0.5, 0.9, 1.0)
 	sprite.flip_h = not facing_right
 	visual_rect.scale.x = 1.0 if facing_right else -1.0
+
+
+# ════════════════════════════════════════════
+# 多人同步 RPC
+# ════════════════════════════════════════════
+
+## 广播自己的状态给所有其他客户端 (unreliable = 低延迟, 不保证送达)
+@rpc("any_peer", "unreliable_ordered", "call_remote")
+func _sync_state(pos: Vector2, vel: Vector2, facing: bool, is_alive: bool) -> void:
+	if _is_my_player():
+		return  # 不覆盖自己的状态
+
+	position = pos
+	velocity = vel
+
+	if facing_right != facing:
+		facing_right = facing
+		_update_visuals()
+
+	if alive != is_alive:
+		alive = is_alive
+		visible = is_alive
+		collision_shape.set_deferred("disabled", not is_alive)
+
+
+# ════════════════════════════════════════════
+# 伤害 / 死亡 / 复活
+# ════════════════════════════════════════════
+
+## 主机调用此 RPC 通知客户端受伤
+@rpc("authority", "reliable", "call_remote")
+func _rpc_take_damage() -> void:
+	take_damage()
 
 
 ## 受到伤害 — 扣一条命并短暂无敌
@@ -132,23 +184,18 @@ func take_damage() -> void:
 	if current_lives <= 0:
 		die()
 	else:
-		# 短暂无敌防止连续受伤
 		is_invincible = true
 		invincibility_timer.start(1.5)
-		# TODO: 播放受伤动画/音效
 
 
-## 玩家死亡
 func die() -> void:
 	if not alive:
 		return
 	alive = false
 	visible = false
 	collision_shape.set_deferred("disabled", true)
-	# GameWorld 会检测所有玩家死亡并结束游戏
 
 
-## 复活（阶段 4 多人时由服务器调用）
 func respawn(spawn_pos: Vector2) -> void:
 	position = spawn_pos
 	velocity = Vector2.ZERO
@@ -172,3 +219,20 @@ func disable_teammate_bonus() -> void:
 
 func _on_invincibility_timer_timeout() -> void:
 	is_invincible = false
+
+
+# ════════════════════════════════════════════
+# 工具方法
+# ════════════════════════════════════════════
+
+## 判断当前玩家是否属于本客户端
+func _is_my_player() -> bool:
+	if not _is_multiplayer:
+		return true  # 单人模式，总是自己的
+	return peer_id == _get_my_steam_id()
+
+
+func _get_my_steam_id() -> int:
+	if not SteamMgr.steam_enabled:
+		return 1
+	return Steam.getSteamID()

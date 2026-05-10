@@ -2,6 +2,7 @@ class_name PlatformGenerator
 extends Node2D
 ## 平台随机生成器
 ## 垂直方向不断生成可站立的平台，确保可达性
+## 多人模式: 使用共享种子保证所有客户端生成相同平台
 
 # 生成参数
 @export var layer_height: float = 150.0
@@ -14,13 +15,13 @@ extends Node2D
 @export var lookahead_layers: int = 6
 @export var cleanup_layers_below: int = 3
 @export var enemy_chance: float = 0.25
-@export var ground_y: float = 580.0  # 初始地面 Y 坐标（屏幕底部附近）
+@export var ground_y: float = 580.0
 
 # 内部状态
 var max_generated_layer: int = 0
 var all_platforms: Array = []
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-var highest_generated_y: float = 0.0  # 已生成的最上方平台的 Y 坐标
+var highest_generated_y: float = 0.0
 
 # 场景路径
 const PLATFORM_SCENE := "res://scenes/game/platform.tscn"
@@ -35,13 +36,21 @@ var ready_to_generate: bool = false
 
 func _ready() -> void:
 	rng.randomize()
-	# 注意: _generate_initial_floor() 在 setup() 中调用，因为需要 platforms_parent 和 camera
+	# 注意: setup() 中会覆盖种子并生成初始平台
 
 
-func setup(p_platforms_parent: Node2D, p_enemies_parent: Node2D, p_camera_controller: Node2D) -> void:
+## 注入外部引用 + 设置种子
+## p_seed: 0 = 随机 (单人), 非 0 = 共享种子 (多人)
+func setup(p_platforms_parent: Node2D, p_enemies_parent: Node2D, p_camera_controller: Node2D, p_seed: int = 0) -> void:
 	platforms_parent = p_platforms_parent
 	enemies_parent = p_enemies_parent
 	camera_controller = p_camera_controller
+
+	# 多人模式: 使用共享种子确保所有客户端生成相同平台布局
+	if p_seed != 0:
+		rng.seed = p_seed
+		print("[PlatformGenerator] 使用共享种子: %d" % p_seed)
+
 	_generate_initial_floor()
 	ready_to_generate = true
 
@@ -52,7 +61,6 @@ func _process(_delta: float) -> void:
 
 	var camera_top_y: float = camera_controller.get_camera_top_y()
 
-	# 在相机上方预生成平台层
 	while highest_generated_y > camera_top_y - (lookahead_layers * layer_height):
 		max_generated_layer += 1
 		_generate_layer(max_generated_layer)
@@ -61,11 +69,10 @@ func _process(_delta: float) -> void:
 
 ## 生成起始安全区域
 func _generate_initial_floor() -> void:
-	# 地面层（layer 0）— 宽大平台，在屏幕底部
+	# 地面层
 	_spawn_platform(world_width / 2.0, ground_y, 350.0)
 	all_platforms.append({"layer": 0, "x": world_width / 2.0 - 175.0, "y": ground_y, "width": 350.0})
 
-	# 向上几层做安全引导
 	var safe_layouts := [
 		{"offset_x": 0, "width": 260.0},
 		{"offset_x": -120, "width": 200.0},
@@ -85,7 +92,6 @@ func _generate_initial_floor() -> void:
 	highest_generated_y = ground_y - (max_generated_layer * layer_height)
 
 
-## 生成单层平台
 func _generate_layer(layer: int) -> void:
 	var base_y := ground_y - (layer * layer_height)
 	var prev_platforms := _get_platforms_in_layer(layer - 1)
@@ -122,7 +128,6 @@ func _generate_layer(layer: int) -> void:
 			_spawn_enemy(p.x + p.width / 2.0, p.y)
 
 
-## 从上一层是否可达
 func _is_reachable_from_prev(cx: float, cy: float, width: float, prev_platforms: Array) -> bool:
 	for prev: Dictionary in prev_platforms:
 		var prev_cx: float = prev.x + prev.width / 2.0

@@ -11,3 +11,21 @@ build/
 
 # 编辑器临时文件
 *.uid_cache
+
+# 导出预设 (含敏感路径/密钥)
+export_presets.cfg
+
+# 导出包
+*.zip
+*.apk
+*.aab
+
+# IDE / 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 生成文件
+Thumbs.db
+.DS_Store

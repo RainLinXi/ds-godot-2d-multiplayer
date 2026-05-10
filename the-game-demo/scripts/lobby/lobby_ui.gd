@@ -88,7 +88,7 @@ func _refresh_member_list() -> void:
 		child.queue_free()
 
 	# 重建成员列表
-	for m: Dictionary in LobbyMgr.members:
+	for m in LobbyMgr.members:
 		var label := Label.new()
 		var name: String = m.get("name", "未知")
 		var sid: int = m.get("steam_id", 0)

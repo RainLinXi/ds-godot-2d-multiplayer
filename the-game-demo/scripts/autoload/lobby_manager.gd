@@ -19,7 +19,7 @@ signal error_occurred(message: String)
 var lobby_id: int = 0               # 0 = 无大厅
 var is_host: bool = false
 var members: Array = []             # [{steam_id: int, name: String}]
-var multiplayer_peer: SteamMultiplayerPeer
+var multiplayer_peer: RefCounted  # SteamMultiplayerPeer (GDExtension C++ 类)
 var _is_creating: bool = false      # 防止 createLobby 双重信号
 
 
@@ -181,7 +181,7 @@ func _add_self_to_members() -> void:
 
 func _refresh_members() -> void:
 	var old_ids: Array = []
-	for m: Dictionary in members:
+	for m in members:
 		old_ids.append(m.steam_id)
 
 	members.clear()
@@ -193,13 +193,13 @@ func _refresh_members() -> void:
 
 	# 对比变化，发送增减信号
 	var new_ids: Array = []
-	for m: Dictionary in members:
+	for m in members:
 		new_ids.append(m.steam_id)
 
-	for old_id: int in old_ids:
+	for old_id in old_ids:
 		if old_id not in new_ids:
 			var old_name := ""
-			for m: Dictionary in members:
+			for m in members:
 				if m.steam_id == old_id:
 					old_name = m.name
 					break
@@ -207,7 +207,7 @@ func _refresh_members() -> void:
 				old_name = "玩家 %d" % old_id
 			member_left.emit(old_id, old_name)
 
-	for new_id: int in new_ids:
+	for new_id in new_ids:
 		if new_id not in old_ids:
 			var new_name: String = Steam.getFriendPersonaName(new_id)
 			member_joined.emit(new_id, new_name)

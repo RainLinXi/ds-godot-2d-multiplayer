@@ -11,11 +11,18 @@ func _ready() -> void:
 
 
 func _initialize_steam() -> void:
-	var init_result: Dictionary = Steam.steamInitEx(480, false)
-	var status: int = init_result.get("status", 0)
+	var init_result = Steam.steamInitEx(480, false)
+	print("[SteamMgr] steamInitEx 原始返回值: ", init_result, " (type=", typeof(init_result), ")")
+
+	# 兼容不同 GDExtension 版本的返回格式
+	var status: int = -1
+	if typeof(init_result) == TYPE_DICTIONARY:
+		status = init_result.get("status", -1)
+	elif typeof(init_result) == TYPE_INT:
+		status = init_result
 
 	if status != 1:
-		push_warning("[SteamMgr] Steam 初始化失败 (status=%d, verbal='%s') — Steam 客户端可能未运行，多人模式不可用。" % [status, init_result.get("verbal", "未知")])
+		push_warning("[SteamMgr] Steam 初始化失败 (status=%d) — Steam 客户端可能未运行，多人模式不可用。" % status)
 		steam_enabled = false
 		return
 

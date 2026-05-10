@@ -189,11 +189,12 @@ func _on_join_requested(p_lobby_id: int, _friend_id: int) -> void:
 
 ## 大厅数据变更 — 用于检测房主开始游戏等信号
 func _on_lobby_data_update(success: int, p_lobby_id: int, _member_id: int) -> void:
-	if not success or p_lobby_id != lobby_id:
+	print("[LobbyMgr] lobby_data_update: success=%d lobby=%d my_lobby=%d" % [success, p_lobby_id, lobby_id])
+	if not success:
 		return
 	# 手动查询 "state" 键判断房主是否开始了游戏
 	var state: String = Steam.getLobbyData(p_lobby_id, "state")
-	print("[LobbyMgr] 大厅数据变更: lobby=%d state=%s" % [p_lobby_id, state])
+	print("[LobbyMgr] 大厅数据变更: lobby=%d state='%s' (is_host=%s)" % [p_lobby_id, state, is_host])
 	if state == "in_game" and not is_host:
 		print("[LobbyMgr] 房主已开始游戏 — 切换到 game_world")
 		_activate_and_switch()

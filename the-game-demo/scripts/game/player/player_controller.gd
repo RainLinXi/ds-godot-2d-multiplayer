@@ -34,6 +34,8 @@ var peer_id: int = 1
 const SYNC_INTERVAL: float = 0.05   # 每秒 20 次
 var _sync_timer: float = 0.0
 var _is_multiplayer: bool = false
+var _first_sync_logged: bool = false  # 仅首次收到同步时打印日志
+var _first_send_logged: bool = false  # 仅首次发送同步时打印日志
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var visual_rect: ColorRect = $VisualRect
@@ -90,6 +92,9 @@ func _physics_process(delta: float) -> void:
 	_sync_timer += delta
 	if _sync_timer >= SYNC_INTERVAL:
 		_sync_timer = 0.0
+		if not _first_send_logged:
+			_first_send_logged = true
+			print("[Player] _sync_state 首次发送: peer_id=%d pos=%s" % [peer_id, position])
 		_sync_state.rpc(position, velocity, facing_right, alive)
 
 
@@ -148,6 +153,10 @@ func _update_visuals() -> void:
 ## 广播自己的状态给所有其他客户端 (unreliable = 低延迟, 不保证送达)
 @rpc("any_peer", "unreliable_ordered", "call_remote")
 func _sync_state(pos: Vector2, vel: Vector2, facing: bool, is_alive: bool) -> void:
+	if not _first_sync_logged:
+		_first_sync_logged = true
+		print("[Player] _sync_state 首次收到: peer_id=%d pos=%s" % [peer_id, pos])
+
 	if _is_my_player():
 		return  # 不覆盖自己的状态
 

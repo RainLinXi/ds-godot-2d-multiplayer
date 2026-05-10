@@ -36,7 +36,10 @@ func _ready() -> void:
 	game_over = false
 
 	# 检测多人模式: multiplayer_peer 已设置且大厅有成员
-	var is_multi := multiplayer.multiplayer_peer != null and LobbyMgr.members.size() > 0
+	var has_peer := multiplayer.multiplayer_peer != null
+	var has_members := LobbyMgr.members.size() > 0
+	var is_multi := has_peer and has_members
+	print("[GameWorld] _ready: has_peer=%s has_members=%s is_multi=%s members=%d" % [has_peer, has_members, is_multi, LobbyMgr.members.size()])
 
 	# 多人模式使用共享种子 (lobby_id)，单人模式随机
 	var seed_val: int = LobbyMgr.lobby_id if is_multi else 0
@@ -52,31 +55,25 @@ func _ready() -> void:
 # 多人模式
 # ════════════════════════════════════════════
 
-## 初始化多人游戏：主机延迟生成玩家，给客户端时间加载场景
+## 初始化多人游戏：双方各自本地生成所有玩家节点（不依赖 RPC 生成）
 func _setup_multiplayer() -> void:
 	print("[GameWorld] 多人模式 — 大厅成员数: %d" % LobbyMgr.members.size())
-
-	if LobbyMgr.is_host:
-		# 延迟 1 秒生成玩家，确保客户端已完成场景切换 + multiplayer_peer 就绪
-		# 否则 _spawn_player RPC 可能因客户端未就绪而丢失
-		var timer := get_tree().create_timer(1.0)
-		timer.timeout.connect(_spawn_all_players)
+	_spawn_all_players()
 
 
-## 主机：为所有大厅成员生成玩家节点
+## 为所有大厅成员生成玩家节点（主机和客户端都调用）
 func _spawn_all_players() -> void:
-	print("[GameWorld] 主机正在生成所有玩家...")
+	print("[GameWorld] 生成所有玩家节点...")
 	var idx := 0
 	for m in LobbyMgr.members:
 		var sid: int = m.steam_id
 		var spawn_x := get_viewport_rect().size.x / 2.0 + (idx - 1) * 120.0
-		_spawn_player.rpc(sid, Vector2(spawn_x, 550.0))
+		_create_player_node(sid, Vector2(spawn_x, 550.0))
 		idx += 1
 
 
-## 在所有客户端生成一个玩家节点
-@rpc("authority", "call_local", "reliable")
-func _spawn_player(steam_id: int, spawn_pos: Vector2) -> void:
+## 本地创建一个玩家节点
+func _create_player_node(steam_id: int, spawn_pos: Vector2) -> void:
 	var player := PLAYER_SCENE.instantiate() as PlayerController
 	player.position = spawn_pos
 	player.peer_id = steam_id

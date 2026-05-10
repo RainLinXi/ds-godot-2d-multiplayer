@@ -4,10 +4,15 @@ extends Control
 
 @onready var settings_panel: Panel = %SettingsPanel
 @onready var settings_menu: SettingsMenuUI = %SettingsMenuUI
+@onready var multiplayer_btn: Button = $MenuContainer/MultiplayerBtn
 
 
 func _ready() -> void:
 	settings_panel.hide()
+	# 显示 Steam 连接状态
+	if not LobbyMgr.is_steam_available():
+		multiplayer_btn.text = "多人游戏 (Steam 未连接)"
+		multiplayer_btn.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 
 
 func _on_single_player_pressed() -> void:

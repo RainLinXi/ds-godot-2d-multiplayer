@@ -11,9 +11,9 @@ config_version=5
 [application]
 
 config/name="TheGameDemo"
+run/main_scene="res://scenes/main_menu/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/main_menu/main_menu.tscn"
 
 [autoload]
 
@@ -34,3 +34,10 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg")
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+
+[steam]
+
+initialization/app_id=480
+initialization/initialize_on_startup=true
+initialization/embed_callbacks=false
+multiplayer_peer/max_channels=4

@@ -1,4 +1,3 @@
-class_name SteamMgr
 extends Node
 ## Steam 管理器 — 全局单例
 ## 职责：Steam API 初始化 + 每帧 run_callbacks

@@ -1,4 +1,3 @@
-class_name LobbyMgr
 extends Node
 ## 大厅管理器 — 全局单例
 ## 职责：大厅创建/加入/离开、成员管理、SteamMultiplayerPeer 生命周期

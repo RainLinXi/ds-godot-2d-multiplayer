@@ -26,6 +26,10 @@ export_presets.cfg
 *.swp
 *.swo
 
+# Claude Code 本地配置（每个开发者的 AI 配置不同）
+.claude/skills/
+memory/
+
 # OS 生成文件
 Thumbs.db
 .DS_Store
